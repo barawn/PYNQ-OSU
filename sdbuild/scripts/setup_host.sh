@@ -68,7 +68,7 @@ EOT
 set -e
 
 sudo apt-get update
-
+sudo dpkg --add-architecture i386
 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/ppa
 sudo apt-get update
 sudo apt-get install -y $PACKAGES
