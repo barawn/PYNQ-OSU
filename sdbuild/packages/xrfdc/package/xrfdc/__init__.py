@@ -303,6 +303,9 @@ class RFdcTile:
     def _call_function_implicit(self, name, *args):
         return self._parent._call_function(name, self._index, *args)
 
+    def CustomStartUp(self, Start, Stop):
+        self._call_function("CustomStartUp", Start, Stop)
+
     def StartUp(self):
         self._call_function("StartUp")
 

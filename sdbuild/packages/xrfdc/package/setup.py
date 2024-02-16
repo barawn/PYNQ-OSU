@@ -12,7 +12,7 @@ long_description = (''.join(readme_lines))
 
 setup(
     name="xrfdc",
-    version='2.0',
+    version='2.0.1',
     description="Driver for the RFSoC RF Data Converter IP",
     long_description=long_description,
     long_description_content_type='text/markdown',
