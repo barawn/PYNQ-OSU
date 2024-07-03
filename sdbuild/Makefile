@@ -116,6 +116,15 @@ endif
 ifeq ($$(ARCH_$1),aarch64)
 	TEMPLATE_$1 := zynqMP
 endif
+ifndef SDBOOT_$1
+	SDBOOT_$1 := "/dev/mmcblk0p2"
+endif
+
+BSP_BUILD_$1 := $$(BUILD_ROOT_$1)/petalinux_bsp
+BSP_ABS_$1 := $$(patsubst %,$$(BOARDDIR_$1)/%,$$(BSP_$1))
+BSP_PROJECT_$1 := xilinx-$$(shell echo $1 | tr A-Z a-z | tr -cd '[:alnum:]')-$$(KERNEL_VERSION)
+BSP_TARGET_$1 := $$(BSP_BUILD_$1)/$$(BSP_PROJECT_$1).bsp
+BSP_ENV_$1 := BSP=$$(BSP_$1) BSP_BUILD=$$(BSP_BUILD_$1) BSP_ABS=$$(BSP_ABS_$1) BSP_PROJECT=$$(BSP_PROJECT_$1)
 
 BSP_BUILD_$1 := $$(BUILD_ROOT_$1)/petalinux_bsp
 BSP_ABS_$1 := $$(patsubst %,$$(BOARDDIR_$1)/%,$$(BSP_$1))
@@ -159,7 +168,10 @@ $$(PL_PROJ_$1): $$(BSP_TARGET_$1)
 		-s $$(BSP_BUILD_$1)/$$(BSP_PROJECT_$1).bsp -n petalinux_project
 	echo 'CONFIG_USER_LAYER_0="'$(CURDIR)/boot/meta-pynq'"' >> $$(PL_CONFIG_$1)
 	echo 'CONFIG_SUBSYSTEM_ROOTFS_EXT4=y' >> $$(PL_CONFIG_$1)
-	echo 'CONFIG_SUBSYSTEM_SDROOT_DEV="/dev/mmcblk0p2"' >> $$(PL_CONFIG_$1)
+	echo 'CONFIG_SUBSYSTEM_SDROOT_DEV="'$$(SDBOOT_$1)'"'
+	rm -f $(CURDIR)/boot/meta-pynq/recipes-bsp/device-tree/files/pynq_bootargs.dtsi
+	sed s%SDROOT_DEVICE%$$(SDBOOT_$1)% $(CURDIR)/boot/meta-pynq/recipes-bsp/device-tree/files/pynq_bootargs.dtsi.tmpl >> $(CURDIR)/boot/meta-pynq/recipes-bsp/device-tree/files/pynq_bootargs.dtsi
+	echo 'CONFIG_SUBSYSTEM_SDROOT_DEV="'$$(SDBOOT_$1)'"' >> $$(PL_CONFIG_$1)
 	echo 'CONFIG_SUBSYSTEM_ETHERNET_MANUAL_SELECT=y' >> $$(PL_CONFIG_$1)
 	if [ $$(FPGA_MANAGER_$1) = 1 ]; then \
 		echo 'CONFIG_SUBSYSTEM_DEVICETREE_FLAGS="-@"' >> $$(PL_CONFIG_$1) ;\
@@ -428,10 +440,3 @@ dist: $(patsubst %, dist_%, $(USED_ARCH))
 
 # Default package clean target
 PACKAGE_CLEAN_%: ;
-
-clean: $(PACKAGE_CLEAN)
-	-rm -rf $(BUILD_ROOT)
-	-rm -rf $(IMAGE_ROOT)
-
-.PHONY: dist bsp boot_files images all clean \
-	real_all checkenv sdx_sw sysroot nocheck_images
